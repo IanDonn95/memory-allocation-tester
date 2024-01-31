@@ -12,12 +12,13 @@ let arrays = [];
 function allocateTypedArray() {
   let size = (1024 * 1024 * 10) / 8; // 10 MB
   try {
-    const r = Math.random();
     while (true) {
+      const r = Math.random();
       console.log(arrays.length);
       let arrayBuffer = new Float64Array(size);
       for (let i = 0; i < size; i++) {
-        arrayBuffer[i] = r;
+        // arrayBuffer[i] = r;
+        arrayBuffer[i] = Math.random();
       }
       arrays.push(arrayBuffer);
       updateTypedMemoryAllocated((arrays.length * size * 8) / (1024 * 1024));
@@ -33,14 +34,22 @@ function allocateTypedArray() {
 }
 
 let worker = new SharedWorker("worker.js");
+worker.port.postMessage({ type: "init" });
+worker.port.onmessage = function (e) {
+  console.log(e);
+};
+let totalAllocated = 0;
 function allocateSharedWorker() {
-  let size = 1024 * 1024 * 100; // 10 MB
-  let totalAllocated = 0;
+  let size = (1024 * 1024 * 0.5) / 8;
   try {
-    while (true) {
-      let largeData = new Uint8Array(size);
-      worker.port.postMessage(largeData);
-      totalAllocated += size;
+    for (let b = 0; b < 1000; b++) {
+      let arrayBuffer = new Float64Array(size);
+      for (let i = 0; i < size; i++) {
+        // arrayBuffer[i] = r;
+        arrayBuffer[i] = Math.random();
+      }
+      worker.port.postMessage(arrayBuffer, [arrayBuffer.buffer]);
+      totalAllocated += size * 8;
       updateWorkerMemoryAllocated(totalAllocated / (1024 * 1024));
     }
   } catch (e) {
